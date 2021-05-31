@@ -143,9 +143,11 @@ def _main(instaloader: Instaloader, targetlist: List[str], df, filepath,
     if instaloader.context.is_logged_in:
         instaloader.save_session_to_file(sessionfile)
 
-def main(filename, proxy_object = None):
+def main(filename, **kwargs):
 
     df = pd.read_csv(filename, engine='python', sep=';')
+    if 'downloaded' not in df.columns:
+        df['downloaded'] = False
     df['id'] = df['id'].astype(str)
     df['username'] = df['username'].astype(str)
     ids = df[['id', 'username']][~df['downloaded']]
@@ -156,32 +158,32 @@ def main(filename, proxy_object = None):
 
     loader = Instaloader(sleep=True, quiet=False, user_agent='{}'.format(default_user_agent()),
                             dirname_pattern='data/{target}', filename_pattern='{target}_{date_utc}',
-                            download_pictures=False,
-                            download_videos=False, download_video_thumbnails=False,
-                            download_geotags=False,
-                            download_comments=False, save_metadata=True,
-                            compress_json=True,
+                            download_pictures = kwargs.get('download_pictures', False),
+                            download_videos = kwargs.get('download_videos', False),
+                            download_video_thumbnails = kwargs.get('download_video_thumbnails', False),
+                            save_metadata = kwargs.get('save_metadata', True),
+                            compress_json = kwargs.get('compress_json', False),
                             post_metadata_txt_pattern='',
                             storyitem_metadata_txt_pattern=None,
                             max_connection_attempts=2,
                             request_timeout=5.0,
                             resume_prefix='iterator',
                             check_resume_bbd=False,
-                            rapidapi_key=None, proxyrotator=proxy_object)
+                            rapidapi_key=None, proxyrotator = kwargs.get('proxy_object', None))
 
     if len(ids) != 0:
         print('Scraping {} profiles.'.format(len(ids)))
         _main(loader, ids, df, filename,
               username=None, password=None,
                 sessionfile=None,
-                download_profile_pic=True,
-                download_posts=True,
+                download_profile_pic = kwargs.get('download_profile_pic', False),
+                download_posts = True,
                 download_stories=False,
                 download_highlights=False,
                 download_tagged=False,
                 download_igtv=False,
                 fast_update=False,
-                max_count=1000,
+                max_count = kwargs.get('max_count', 1000),
                 post_filter_str=None,
                 storyitem_filter_str=None)
         loader.close()
