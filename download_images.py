@@ -32,26 +32,24 @@ def scrape_pics(path):
     for item in content:
         try:
             caption = item.get('accessibility_caption', '')
-            if 'person' in caption:
-                resp = sess.get(item['display_url'])
-                if resp.status_code == 200:
-                    filename = '{}.jpg'.format(i)
-                    write_raw(resp.content, os.path.join(image_path, filename))
-                    captions[filename] = caption
+            resp = sess.get(item['display_url'])
+            if resp.status_code == 200:
+                filename = '{}.jpg'.format(i)
+                write_raw(resp.content, os.path.join(image_path, filename))
+                captions[filename] = caption
             i += 1
             children = item.get('edge_sidecar_to_children', {}).get('edges', [])
             for child in children:
                 caption = child.get('accessibility_caption', '')
-                if 'person' in caption:
-                    resp = sess.get(child['display_url'])
-                    if resp.status_code == 200:
-                        filename = '{}.jpg'.format(i)
-                        write_raw(resp.content, os.path.join(image_path, filename))
-                        captions[filename] = caption
+                resp = sess.get(child['display_url'])
+                if resp.status_code == 200:
+                    filename = '{}.jpg'.format(i)
+                    write_raw(resp.content, os.path.join(image_path, filename))
+                    captions[filename] = caption
                 i += 1
         except:
             continue
-    with lzma.open(os.path.join(path, 'image_cations.json.xz'), 'w') as f:
+    with lzma.open(os.path.join(path, 'image_captions.json.xz'), 'w') as f:
         json.dump(captions, f)
 
 def main():

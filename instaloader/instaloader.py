@@ -289,6 +289,8 @@ class Instaloader:
         else:
             filename += '.json'
         os.makedirs(os.path.dirname(filename), exist_ok=True)
+        if not isinstance(structure, Profile):
+            print(structure._full_metadata)
         save_structure_to_file(structure, filename)
         # if isinstance(structure, (Post, StoryItem)):
             # log 'json ' message when saving Post or StoryItem

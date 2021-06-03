@@ -121,8 +121,10 @@ class Post:
         node = self._node
         if self._full_metadata_dict:
             node.update(self._full_metadata_dict)
-        if self._owner_profile:
-            node['owner'] = self.owner_profile._asdict()
+        # if self._owner_profile:
+        #     node['owner'] = self.owner_profile._asdict()
+        # if self.accessibility_caption:
+        #     node['accessibility_caption'] = self.accessibility_caption
         if self._location:
             node['location'] = self._location._asdict()
         if self._iphone_struct_:
@@ -247,14 +249,7 @@ class Post:
 
     @property
     def accessibility_caption(self) -> str:
-        try:
-            asd = self._field('accessibility_caption')
-            if asd is None:
-                return ''
-            else:
-                return asd
-        except KeyError:
-            return ''
+        return self._field('accessibility_caption')
 
     @property
     def profile(self) -> str:

@@ -9,6 +9,7 @@ class ProxyRotator(object):
         self.api_key = api_key
         self.idx = idx
         self.current_params = self.get_current_proxy_params()
+        self.rotate_ip()
 
     def get_current_proxy_params(self):
         # print('FUNCTION EXECUTED:{}'.format(inspect.currentframe().f_code.co_name))
