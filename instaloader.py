@@ -39,12 +39,12 @@ if __name__ == '__main__':
         print('Current attempt: {}.'.format(k))
         try:
             func.main(profiles = args.profiles ,filename = args.csv_path, proxy_object=proxy_object)
+            flag = False
         except KeyboardInterrupt:
+            flag = False
             break
         except Exception as err:
             print('Following error occured:\n{}\nDoing sleep for 60 sec, then retry.'.format(str(err)))
             time.sleep(60)
             k += 1
-# if __name__ == '__main__':
-#     main()
 
