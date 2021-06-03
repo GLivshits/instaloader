@@ -1,13 +1,8 @@
-"""Download pictures (or videos) along with their captions and other metadata from Instagram."""
-
-import ast
-import datetime
 import os
 import re
 import sys
 import json
-from argparse import ArgumentParser, SUPPRESS
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from . import (Instaloader, InstaloaderException, InvalidArgumentException, Post, Profile, ProfileNotExistsException,
                StoryItem, __version__, load_structure_from_file, TwoFactorAuthRequiredException, ConnectionException,
@@ -15,26 +10,9 @@ from . import (Instaloader, InstaloaderException, InvalidArgumentException, Post
 from .instaloader import get_default_session_filename
 from .instaloadercontext import default_user_agent
 from .instaloadercontext import InstaloaderContext
-from fake_useragent import UserAgent
 from .exceptions import LoginRequiredException
-import numpy as np
-import requests
-import time
-import inspect
 import pandas as pd
 from operator import itemgetter
-from requests.exceptions import RequestException
-
-def usage_string():
-    # NOTE: duplicated in README.rst and docs/index.rst
-    argv0 = os.path.basename(sys.argv[0])
-    argv0 = "instaloader" if argv0 == "__main__.py" else argv0
-    return """
-{0} [--comments] [--geotags]
-{2:{1}} [--stories] [--highlights] [--tagged] [--igtv]
-{2:{1}} [--login YOUR-USERNAME] [--fast-update]
-{2:{1}} profile | "#hashtag" | %%location_id | :stories | :feed | :saved
-{0} --help""".format(argv0, len(argv0), '')
 
 def append_new_user(df, user_json):
     profile_id = user_json['id']
@@ -66,7 +44,7 @@ def modify_json(filename, data):
     with open(filename, 'w') as f:
         json.dump(json_results, f)
 
-def _main(instaloader: Instaloader, targetlist: List[str], df, filepath,
+def _main(instaloader: Instaloader, targetlist: List[Dict], df, filepath,
           username: Optional[str] = None, password: Optional[str] = None,
           sessionfile: Optional[str] = None,
           download_profile_pic: bool = True, download_posts=True,
@@ -75,7 +53,7 @@ def _main(instaloader: Instaloader, targetlist: List[str], df, filepath,
           download_tagged: bool = False,
           download_igtv: bool = False,
           fast_update: bool = False,
-          max_count: Optional[int] = None, post_filter_str: Optional[str] = None,
+          max_count: Optional[int] = 20000, post_filter_str: Optional[str] = None,
           storyitem_filter_str: Optional[str] = None, scrape_followers: bool = True, scrape_followees: bool = False) -> None:
     count = 1
     kk = 0
@@ -113,7 +91,7 @@ def _main(instaloader: Instaloader, targetlist: List[str], df, filepath,
                 try:
                     user_id = target['id']
                     user_name = target['username']
-                    df_row_idx = target['idx']
+                    df_row_idx = target.get('idx', None)
                     flag_username_changed = False
                     downloaded_flag = False
                     # If username is present
@@ -183,8 +161,8 @@ def _main(instaloader: Instaloader, targetlist: List[str], df, filepath,
                                 print('Downloaded {} users.'.format(kk))
                                 modify_json(json_followers_filename, data)
                                 data = []
-                            if kk == 20000:
-                                print('Breaking loop. Your account is probably almost blocked.')
+                            if kk == max_count:
+                                print('Breaking loop since max_count is reached.')
                                 break
                     elif instaloader.context.is_logged_in and scrape_followees:
                         for followee in profile.get_followers():
@@ -200,8 +178,8 @@ def _main(instaloader: Instaloader, targetlist: List[str], df, filepath,
                                 print('Downloaded {} users.'.format(kk))
                                 modify_json(json_followers_filename, data)
                                 data = []
-                            if kk == 20000:
-                                print('Breaking loop. Your account is probably almost blocked.')
+                            if kk == max_count:
+                                print('Breaking loop since max_count is reached')
                                 break
                         if len(data) > 0:
                             modify_json(json_followers_filename, data)
@@ -216,7 +194,7 @@ def _main(instaloader: Instaloader, targetlist: List[str], df, filepath,
                         raise KeyboardInterrupt
                 flag = False
                 if downloaded_flag:
-                    df.loc[df.query('id == "{}"'.format(user_id)).index, 'scraped_followers'] = True
+                    df.loc[df_row_idx, 'scraped_followers'] = True
                     df.to_csv(filepath, sep=';', index=None)
 
     except LoginRequiredException as err:
@@ -236,18 +214,25 @@ def _main(instaloader: Instaloader, targetlist: List[str], df, filepath,
 
     raise KeyboardInterrupt
 
-def main(filename, **kwargs):
+def main(profiles, filename, **kwargs):
 
-    df = pd.read_csv(filename, engine='python', sep=';', na_values = 'nan', dtype = 'str')
-    if 'scraped_followers' not in df.columns:
-        df['scraped_followers'] = False
-    df['scraped_followers'] = df['scraped_followers'].map({'True': True, 'False': False})
-    df = df.drop_duplicates('username' ,'last')
-    ids = df[['id', 'username']][~df['scraped_followers']]
-    ids['idx'] = ids.index
-
-    # print(ids)
-    ids = ids.to_dict('records')
+    ids = []
+    if not isinstance(filename, type(None)):
+        df = pd.read_csv(filename, engine='python', sep=';', na_values='nan', dtype='str')
+        if 'scraped_followers' not in df.columns:
+            df['scraped_followers'] = False
+        df['scraped_followers'] = df['scraped_followers'].map({'True': True, 'False': False})
+        df = df.drop_duplicates('username', 'last')
+        ids = df[['id', 'username']][~df['scraped_followers']]
+        ids['idx'] = ids.index
+        ids = ids.to_dict('records')
+    elif len(profiles) > 0:
+        df = None
+        for item in profiles:
+            if item.isdigit():
+                ids.append({'id': item, 'username': ''})
+            else:
+                ids.append({'id': '', 'username': item})
 
     loader = Instaloader(sleep=True, quiet=False, user_agent='{}'.format(default_user_agent()),
                             dirname_pattern='results/', filename_pattern='{target}',

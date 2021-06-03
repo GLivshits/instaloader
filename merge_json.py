@@ -3,7 +3,7 @@ import os
 import json
 import lzma
 import concurrent.futures
-import gc
+from tqdm import tqdm
 
 def itemgetter(*items, default = None):
     if len(items) == 1:
@@ -18,7 +18,7 @@ def itemgetter(*items, default = None):
 def merge_json(path):
     data_json = []
     data_path = os.path.join(path, 'posts')
-    target_keys = ['__typename', 'id', 'shortcode', 'dimensions', 'display_url', 'is_video', 'accessibility_caption',
+    target_keys = ['__typename', 'id', 'shortcode', 'edge_sidecar_to_children', 'dimensions', 'display_url', 'is_video', 'accessibility_caption',
                    'taken_at_timestamp', 'thumbnail_resources']
     if os.path.exists(data_path):
         for item in os.listdir(data_path):
@@ -39,8 +39,11 @@ def main():
     parser.add_argument('--num-workers', type = int, default = None, help = 'How many cores to utilize.')
     args = parser.parse_args()
     all_paths = list(map(lambda x: os.path.join(args.path, x), os.listdir(args.path)))
-    with concurrent.futures.ProcessPoolExecutor(max_workers = args.num_workers) as executor:
-        executor.map(merge_json, all_paths)
+    executor = concurrent.futures.ProcessPoolExecutor(max_workers=args.num_workers)
+    jobs = [executor.submit(merge_json, item) for item in all_paths]
+    i = 0
+    for _ in tqdm(concurrent.futures.as_completed(jobs), total=len(jobs)):
+        i += 1
 
 if __name__ == '__main__':
     main()
