@@ -70,7 +70,7 @@ def _main(instaloader: Instaloader, targetlist: List[Dict], df, filepath,
                             except (QueryReturnedNotFoundException, ProfileNotExistsException) as err:
                                 print(err)
                                 print('Profile does not exist anymore!')
-                                df = delete_row(df, user_id)
+                                df = delete_row(df, idx)
                                 df.to_csv(filepath, sep=';', index=None)
                                 flag = False
                                 break
@@ -81,7 +81,7 @@ def _main(instaloader: Instaloader, targetlist: List[Dict], df, filepath,
                         except (QueryReturnedNotFoundException, ProfileNotExistsException) as err:
                             print(err)
                             print('Profile does not exist anymore!')
-                            df = delete_row(df, user_id)
+                            df = delete_row(df, idx)
                             df.to_csv(filepath, sep=';', index=None)
                             flag = False
                             break
@@ -99,7 +99,7 @@ def _main(instaloader: Instaloader, targetlist: List[Dict], df, filepath,
                 if not isinstance(df, type(None)):
                     with open(os.path.join('results', '{}-{}.json'.format(profile.username, profile.userid)), 'r') as f:
                         json_dict = json.load(f)
-                    df = modify_row(df, json_dict)
+                    df = modify_row(df, json_dict, idx)
                     if k % 100 == 0:
                         df.to_csv(filepath, sep=';', index=None)
 

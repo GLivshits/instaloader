@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from instaloader import scrape_followers, scrape_user_data, scrape_posts
+from instaloader import scrape_followers, scrape_user_data, scrape_posts, scrape_hashtag
 from instaloader.proxyrotator import ProxyRotator
 import time
 import argparse
@@ -11,7 +11,7 @@ parser.add_argument('profiles', nargs='*',
                             "automatically finds it by its unique ID and renames the folder likewise.")
 parser.add_argument('--csv_path', type = str,
                     help = 'Path to the .csv file from which scraping will be conducted')
-parser.add_argument('--task', type = str, choices = ['scrape_user_data', 'scrape_posts', 'scrape_followers'],
+parser.add_argument('--task', type = str, choices = ['scrape_user_data', 'scrape_posts', 'scrape_followers', 'scrape_hashtag'],
                     help = 'Task specifies what action will be performed on data.', required = True)
 parser.add_argument('--use_proxy', action = 'store_true',
                     help = 'Whether to use proxy or not. For followers scraping its not used.')
@@ -29,7 +29,8 @@ proxy_object = None
 if len(api_key) > 0 and args.use_proxy:
     proxy_object = ProxyRotator(api_key = api_key, idx = args.proxy_index)
 
-func_dict = {'scrape_user_data': scrape_user_data, 'scrape_posts': scrape_posts, 'scrape_followers': scrape_followers}
+func_dict = {'scrape_user_data': scrape_user_data, 'scrape_posts': scrape_posts,
+             'scrape_followers': scrape_followers, 'scrape_hashtag': scrape_hashtag}
 func = func_dict[args.task]
 
 flag = True
@@ -38,7 +39,7 @@ if __name__ == '__main__':
     while flag:
         print('Current attempt: {}.'.format(k))
         try:
-            func.main(profiles = args.profiles ,filename = args.csv_path, proxy_object=proxy_object)
+            func.main(profiles = args.profiles ,filename = args.csv_path, proxy_object=proxy_object, compress_json = True)
             flag = False
         except KeyboardInterrupt:
             flag = False

@@ -3,3 +3,6 @@
 *.json
 *.csv
 /.idea
+*.xz
+/data
+

@@ -65,7 +65,7 @@ def _main(instaloader: Instaloader, targetlist: List[Dict], df, filepath,
                             except (QueryReturnedNotFoundException, ProfileNotExistsException) as err:
                                 print(err)
                                 print('Profile does not exist anymore!')
-                                df = delete_row(df, user_id)
+                                df = delete_row(df, idx)
                                 df.to_csv(filepath, sep=';', index=None)
                                 flag = False
                                 break

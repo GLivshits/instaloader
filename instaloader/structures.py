@@ -121,8 +121,8 @@ class Post:
         node = self._node
         if self._full_metadata_dict:
             node.update(self._full_metadata_dict)
-        # if self._owner_profile:
-        #     node['owner'] = self.owner_profile._asdict()
+        if self._owner_profile:
+            node['owner'] = self.owner_profile._asdict()
         # if self.accessibility_caption:
         #     node['accessibility_caption'] = self.accessibility_caption
         if self._location:
@@ -249,7 +249,10 @@ class Post:
 
     @property
     def accessibility_caption(self) -> str:
-        return self._field('accessibility_caption')
+        try:
+            return self._field('accessibility_caption')
+        except KeyError:
+            return ''
 
     @property
     def profile(self) -> str:
@@ -1569,7 +1572,7 @@ def save_structure_to_file(structure: JsonExportable, filename: str) -> None:
                           'node': structure._asdict()}
         if compress:
             with lzma.open(filename, 'wt', check=lzma.CHECK_NONE) as fp:
-                json.dump(json_structure, fp=fp, separators=(',', ':'))
+                json.dump(json_structure, fp=fp, separators=(',', ':'), indent=4, sort_keys=True)
         else:
             with open(filename, 'wt') as fp:
                 json.dump(json_structure, fp=fp, indent=4, sort_keys=True)
@@ -1578,7 +1581,7 @@ def save_structure_to_file(structure: JsonExportable, filename: str) -> None:
                           'node': structure._asdict()}
         if compress:
             with lzma.open(filename, 'wt', check=lzma.CHECK_NONE) as fp:
-                json.dump(json_structure, fp=fp, separators=(',', ':'))
+                json.dump(json_structure, fp=fp, separators=(',', ':'), indent=4, sort_keys=True)
         else:
             with open(filename, 'wt') as fp:
                 json.dump(json_structure, fp=fp, indent=4, sort_keys=True)

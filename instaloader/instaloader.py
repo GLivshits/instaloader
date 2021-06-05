@@ -289,6 +289,8 @@ class Instaloader:
         else:
             filename += '.json'
         os.makedirs(os.path.dirname(filename), exist_ok=True)
+        # if not isinstance(structure, Profile):
+        #     print(structure.accessibility_caption)
         save_structure_to_file(structure, filename)
         # if isinstance(structure, (Post, StoryItem)):
             # log 'json ' message when saving Post or StoryItem
@@ -1031,6 +1033,7 @@ class Instaloader:
         .. versionchanged:: 4.4
            Add parameters `profile_pic` and `posts`.
         """
+
         if isinstance(hashtag, str):
             with self.context.error_catcher("Get hashtag #{}".format(hashtag)):
                 hashtag = Hashtag.from_name(self.context, hashtag)
