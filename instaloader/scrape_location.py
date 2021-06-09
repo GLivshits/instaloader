@@ -24,12 +24,12 @@ def _main(instaloader: Instaloader, targetlist: List[Dict], df, filepath,
     k = 1
     try:
         # Generate set of profiles, already downloading non-profile targets
-        for hashtag in targetlist:
+        for loc in targetlist:
             flag = True
             while flag:
                 try:
-                    instaloader.context.log("{}. #{}".format(k, hashtag))
-                    instaloader.download_hashtag(hashtag, max_count = max_count, profile_pic = False)
+                    instaloader.context.log("{}. Location code: {}".format(k, loc))
+                    instaloader.download_location(loc, max_count = max_count)
                 except LoginRequiredException:
                     time.sleep(10)
                     continue
@@ -37,7 +37,7 @@ def _main(instaloader: Instaloader, targetlist: List[Dict], df, filepath,
                 flag = False
 
     except KeyboardInterrupt:
-        instaloader.context.error("Interrupted by user.")
+        print("\nInterrupted by user.", file=sys.stderr)
         raise
     except:
         raise

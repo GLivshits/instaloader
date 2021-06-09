@@ -932,7 +932,7 @@ class Instaloader:
                                  fast_update, post_filter,
                                  max_count=max_count, total_count=node_iterator.count)
 
-    @_requires_login
+    # @_requires_login
     def get_location_posts(self, location: str) -> Iterator[Post]:
         #print('FUNCTION EXECUTED:{}'.format(inspect.currentframe().f_code.co_name))
         """Get Posts which are listed by Instagram for a given Location.
@@ -958,7 +958,7 @@ class Instaloader:
             has_next_page = location_data['page_info']['has_next_page']
             end_cursor = location_data['page_info']['end_cursor']
 
-    @_requires_login
+    # @_requires_login
     def download_location(self, location: str,
                           max_count: Optional[int] = None,
                           post_filter: Optional[Callable[[Post], bool]] = None,
@@ -1046,7 +1046,7 @@ class Instaloader:
         if posts:
             self.context.log("Retrieving pictures with hashtag #{}...".format(hashtag.name))
             self.posts_download_loop(hashtag.get_all_posts(), target, fast_update, post_filter,
-                                     max_count=max_count)
+                                     total_count = hashtag.mediacount, max_count=max_count)
         if self.save_metadata:
             json_filename = '{0}/{1}'.format(self.dirname_pattern.format(profile=target,
                                                                          target=target),

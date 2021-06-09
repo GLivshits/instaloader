@@ -148,23 +148,6 @@ def _main(instaloader: Instaloader, targetlist: List[Dict], df, filepath,
                                 json.dump(data, f)
                         data = []
                         print('Scraping followees of user {}.'.format(profile.username))
-                        for followee in profile.get_followees():
-                            data.append({'id': str(followee._asdict()['id']), 'username': followee._asdict()['username'],
-                                         'biography': '', 'business_category_name': '', 'connected_fb_page': '',
-                                         'external_url': '', 'full_name': followee._asdict()['full_name'],
-                                         'is_business_account': '', 'is_joined_recently': '',
-                                         'is_private': '', 'is_professional_account': '', 'is_verified': '',
-                                         'profile_pic_url': followee._asdict()['profile_pic_url']})
-                            kk += 1
-                            # profiles.add(followee)
-                            if kk % 100 == 0:
-                                print('Downloaded {} users.'.format(kk))
-                                modify_json(json_followers_filename, data)
-                                data = []
-                            if kk == max_count:
-                                print('Breaking loop since max_count is reached.')
-                                break
-                    elif instaloader.context.is_logged_in and scrape_followees:
                         for followee in profile.get_followers():
                             data.append({'id': str(followee._asdict()['id']), 'username': followee._asdict()['username'],
                                          'biography': '', 'business_category_name': '', 'connected_fb_page': '',
@@ -173,7 +156,22 @@ def _main(instaloader: Instaloader, targetlist: List[Dict], df, filepath,
                                          'is_private': '', 'is_professional_account': '', 'is_verified': '',
                                          'profile_pic_url': followee._asdict()['profile_pic_url']})
                             kk += 1
-                            # profiles.add(followee)
+                            if kk % 100 == 0:
+                                print('Downloaded {} users.'.format(kk))
+                                modify_json(json_followers_filename, data)
+                                data = []
+                            if kk == max_count:
+                                print('Breaking loop since max_count is reached.')
+                                break
+                    elif instaloader.context.is_logged_in and scrape_followees:
+                        for followee in profile.get_followees():
+                            data.append({'id': str(followee._asdict()['id']), 'username': followee._asdict()['username'],
+                                         'biography': '', 'business_category_name': '', 'connected_fb_page': '',
+                                         'external_url': '', 'full_name': followee._asdict()['full_name'],
+                                         'is_business_account': '', 'is_joined_recently': '',
+                                         'is_private': '', 'is_professional_account': '', 'is_verified': '',
+                                         'profile_pic_url': followee._asdict()['profile_pic_url']})
+                            kk += 1
                             if kk % 100 == 0:
                                 print('Downloaded {} users.'.format(kk))
                                 modify_json(json_followers_filename, data)
@@ -248,11 +246,12 @@ def main(profiles, filename, **kwargs):
                             resume_prefix='iterator',
                             check_resume_bbd=False,
                             rapidapi_key=None, proxyrotator=None)
-    print('Login is required for scraping followers and followees!')
-    username = input('Enter username: ')
-    print('/n')
-    password = input('Enter password: ')
-    print('/n')
+    if kwargs.get('username') is None:
+        print('Login is required for scraping followers and followees!')
+        username = input('Enter username: ')
+        print('/n')
+        password = input('Enter password: ')
+        print('/n')
 
     if len(ids) != 0:
         print('Scraping {} profiles.'.format(len(ids)))

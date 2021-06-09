@@ -14,6 +14,8 @@ from datetime import datetime, timedelta
 from functools import partial
 from typing import Any, Callable, Dict, Iterator, List, Optional, Union
 import numpy as np
+import logging
+import logging.config
 
 import requests
 import requests.utils
@@ -66,6 +68,7 @@ class InstaloaderContext:
                  rate_controller: Optional[Callable[["InstaloaderContext"], "RateController"]] = None,
                  rapidapi_key: Optional[str] = None, proxyrotator: Optional[ProxyRotator] = None):
 
+        logging.basicConfig(filename='app.log', filemode='a', format='%(asctime)s - %(message)s')
         self.proxyrotator = proxyrotator
         self.useragentrotator = None
         self.user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.85 Safari/537.36'
@@ -77,7 +80,6 @@ class InstaloaderContext:
             self.use_proxy = False
 
         if self.use_proxy:
-            # self.proxyrotator = ProxyRotator(api_key = '9b730336c403334c7a8ae628aa93ad9f')
             self.useragentrotator = UserAgent()
             self.user_agent = self.useragentrotator.random
             self.proxy_dict = self.proxyrotator.get_proxy_url_format()
@@ -96,6 +98,7 @@ class InstaloaderContext:
         self.two_factor_auth_pending = None
         self.rapidapi_key = rapidapi_key
         self.loginexceptioncount = 0
+
 
         # error log, filled with error() and printed at the end of Instaloader.main()
         self.error_log = []                      # type: List[str]
@@ -140,6 +143,7 @@ class InstaloaderContext:
         :param msg: Message to be printed.
         :param repeat_at_end: Set to false if the message should be printed, but not repeated at program termination."""
         print(msg, file=sys.stderr)
+        logging.error(msg)
         if repeat_at_end:
             self.error_log.append(msg)
 

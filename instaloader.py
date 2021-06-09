@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
-from instaloader import scrape_followers, scrape_user_data, scrape_posts, scrape_hashtag
-from instaloader.proxyrotator import ProxyRotator
-import time
 import argparse
+import time
+
+from instaloader import scrape_followers, scrape_user_data, scrape_posts, scrape_hashtag, scrape_location
+from instaloader.proxyrotator import ProxyRotator
+from instaloader.exceptions import InstaloaderException
 
 parser = argparse.ArgumentParser()
 parser.add_argument('profiles', nargs='*',
@@ -11,9 +13,11 @@ parser.add_argument('profiles', nargs='*',
                             "automatically finds it by its unique ID and renames the folder likewise.")
 parser.add_argument('--csv_path', type = str,
                     help = 'Path to the .csv file from which scraping will be conducted')
-parser.add_argument('--task', type = str, choices = ['scrape_user_data', 'scrape_posts', 'scrape_followers', 'scrape_hashtag'],
+parser.add_argument('--task', type = str, choices = ['scrape_user_data', 'scrape_posts', 'scrape_followers', 'scrape_hashtag', 'scrape_location'],
                     help = 'Task specifies what action will be performed on data.', required = True)
 parser.add_argument('--use_proxy', action = 'store_true',
+                    help = 'Whether to use proxy or not. For followers scraping its not used.')
+parser.add_argument('--api_key', type = str, default = '',
                     help = 'Whether to use proxy or not. For followers scraping its not used.')
 parser.add_argument('--proxy_index', type = int, default = 0,
                     help = 'Index of proxy (if used).')
@@ -24,13 +28,19 @@ if len(args.profiles) > 0:
 else:
     assert isinstance(args.csv_path, str), 'If profiles not specified, you should specify the path to .csv file!'
 
-api_key = ''
+if args.use_proxy:
+    if len(args.api_key) == 0:
+        raise InstaloaderException('To use proxy, one should specify an api-key from mobileproxy.space! Proceeding without proxy.')
+
+
+api_key = args.api_key
 proxy_object = None
 if len(api_key) > 0 and args.use_proxy:
     proxy_object = ProxyRotator(api_key = api_key, idx = args.proxy_index)
 
 func_dict = {'scrape_user_data': scrape_user_data, 'scrape_posts': scrape_posts,
-             'scrape_followers': scrape_followers, 'scrape_hashtag': scrape_hashtag}
+             'scrape_followers': scrape_followers, 'scrape_hashtag': scrape_hashtag,
+             'scrape_location': scrape_location}
 func = func_dict[args.task]
 
 flag = True
@@ -48,4 +58,6 @@ if __name__ == '__main__':
             print('Following error occured:\n{}\nDoing sleep for 60 sec, then retry.'.format(str(err)))
             time.sleep(60)
             k += 1
+            flag = False
+            break
 
