@@ -25,3 +25,32 @@
 2021-06-07 14:03:40,463 - JSON Query to sanam.nadha/feed/: Could not find "window._sharedData" in html response. [retrying; skip with ^C]
 2021-06-07 14:08:49,508 - JSON Query to ayxshaahsan/feed/: Could not find "window._sharedData" in html response. [retrying; skip with ^C]
 2021-06-07 14:08:51,185 - JSON Query to ayxshaahsan/feed/: Could not find "window._sharedData" in html response. [retrying; skip with ^C]
+2021-06-11 16:11:39,715 - JSON Query to explore/tags/smartphone/: HTTPSConnectionPool(host='www.instagram.com', port=443): Read timed out. (read timeout=10.0) [retrying; skip with ^C]
+2021-06-11 16:20:57,331 - JSON Query to explore/tags/smartphone/: HTTPSConnectionPool(host='www.instagram.com', port=443): Read timed out. (read timeout=10.0) [retrying; skip with ^C]
+2021-06-11 16:30:48,235 - JSON Query to explore/tags/smartphone/: HTTPSConnectionPool(host='www.instagram.com', port=443): Read timed out. (read timeout=10.0) [retrying; skip with ^C]
+2021-06-11 16:35:18,415 - JSON Query to explore/tags/smartphone/: HTTPSConnectionPool(host='www.instagram.com', port=443): Read timed out. (read timeout=10.0) [retrying; skip with ^C]
+2021-06-11 16:36:57,283 - JSON Query to explore/tags/smartphone/: HTTPSConnectionPool(host='www.instagram.com', port=443): Read timed out. [retrying; skip with ^C]
+2021-06-11 16:40:58,191 - JSON Query to explore/tags/smartphone/: HTTPSConnectionPool(host='www.instagram.com', port=443): Read timed out. [retrying; skip with ^C]
+2021-06-11 16:42:49,199 - JSON Query to explore/tags/smartphone/: HTTPSConnectionPool(host='www.instagram.com', port=443): Read timed out. [retrying; skip with ^C]
+2021-06-11 16:43:35,391 - JSON Query to explore/tags/smartphone/: HTTPSConnectionPool(host='www.instagram.com', port=443): Read timed out. [retrying; skip with ^C]
+2021-06-11 16:44:11,935 - JSON Query to explore/tags/smartphone/: HTTPSConnectionPool(host='www.instagram.com', port=443): Read timed out. [retrying; skip with ^C]
+2021-06-11 16:47:57,334 - JSON Query to explore/tags/smartphone/: HTTP error code 560. [retrying; skip with ^C]
+2021-06-11 16:51:35,888 - JSON Query to explore/tags/smartphone/: HTTP error code 560. [retrying; skip with ^C]
+2021-06-11 16:53:02,831 - JSON Query to explore/tags/smartphone/: HTTPSConnectionPool(host='www.instagram.com', port=443): Read timed out. (read timeout=10.0) [retrying; skip with ^C]
+2021-06-11 16:57:54,499 - JSON Query to explore/tags/smartphone/: HTTPSConnectionPool(host='www.instagram.com', port=443): Read timed out. (read timeout=10.0) [retrying; skip with ^C]
+2021-06-11 17:03:00,439 - JSON Query to explore/tags/smartphone/: HTTPSConnectionPool(host='www.instagram.com', port=443): Read timed out. (read timeout=10.0) [retrying; skip with ^C]
+2021-06-11 17:07:53,459 - JSON Query to explore/tags/smartphone/: HTTPSConnectionPool(host='www.instagram.com', port=443): Read timed out. (read timeout=10.0) [retrying; skip with ^C]
+2021-06-11 17:09:32,927 - JSON Query to explore/tags/smartphone/: HTTPSConnectionPool(host='www.instagram.com', port=443): Read timed out. (read timeout=10.0) [retrying; skip with ^C]
+2021-06-11 17:13:38,571 - JSON Query to explore/tags/smartphone/: HTTPSConnectionPool(host='www.instagram.com', port=443): Read timed out. (read timeout=10.0) [retrying; skip with ^C]
+2021-06-11 17:21:14,351 - JSON Query to explore/tags/smartphone/: HTTPSConnectionPool(host='www.instagram.com', port=443): Read timed out. (read timeout=10.0) [retrying; skip with ^C]
+2021-06-11 17:26:02,823 - JSON Query to explore/tags/smartphone/: HTTPSConnectionPool(host='www.instagram.com', port=443): Read timed out. (read timeout=10.0) [retrying; skip with ^C]
+2021-06-11 17:31:15,435 - JSON Query to explore/tags/smartphone/: HTTPSConnectionPool(host='www.instagram.com', port=443): Read timed out. (read timeout=10.0) [retrying; skip with ^C]
+2021-06-11 17:36:19,756 - JSON Query to explore/tags/smartphone/: HTTPSConnectionPool(host='www.instagram.com', port=443): Read timed out. (read timeout=10.0) [retrying; skip with ^C]
+2021-07-02 11:49:02,746 - Error occurred during loading data. Trying to use cache server https://fake-useragent.herokuapp.com/browsers/0.1.11
+Traceback (most recent call last):
+  File "/home/grisha/anaconda3/envs/instaloader/lib/python3.8/site-packages/fake_useragent/utils.py", line 154, in load
+    for item in get_browsers(verify_ssl=verify_ssl):
+  File "/home/grisha/anaconda3/envs/instaloader/lib/python3.8/site-packages/fake_useragent/utils.py", line 99, in get_browsers
+    html = html.split('<table class="w3-table-all notranslate">')[1]
+IndexError: list index out of range
+2021-07-02 12:15:30,399 - justa.wie: --login=USERNAME required.

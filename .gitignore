@@ -6,4 +6,5 @@
 *.xz
 /data
 *.txt
-
+*.jpg
+*.pyc

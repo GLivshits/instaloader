@@ -447,12 +447,12 @@ class Instaloader:
         self.context.write_raw(pic_bytes if pic_bytes else http_response, filename)
         if date_object:
             os.utime(filename, (datetime.now().timestamp(), date_object.timestamp()))
-        self.context.log('')  # log output of _get_and_write_raw() does not produce \n
+        # self.context.log('')  # log output of _get_and_write_raw() does not produce \n
 
     def download_profilepic(self, profile: Profile) -> None:
         #print('FUNCTION EXECUTED:{}'.format(inspect.currentframe().f_code.co_name))
         """Downloads and saves profile pic."""
-        self.download_title_pic(profile.profile_pic_url, profile.username.lower(), 'profile_pic', profile)
+        self.download_title_pic(profile.profile_pic_url, str(profile.userid).lower(), 'profile_pic', profile)
 
     def download_highlight_cover(self, highlight: Highlight, target: Union[str, Path]) -> None:
         #print('FUNCTION EXECUTED:{}'.format(inspect.currentframe().f_code.co_name))
@@ -603,7 +603,7 @@ class Instaloader:
         if self.save_metadata:
             self.save_metadata_json(filename, post)
 
-        self.context.log()
+        # self.context.log()
         return downloaded
 
     @_requires_login
@@ -817,11 +817,11 @@ class Instaloader:
             for number, post in enumerate(posts, start=start_index + 1):
                 if max_count is not None and number > max_count:
                     break
-                if displayed_count is not None:
-                    self.context.log("[{0:d}/{1:d}]\r".format(number, displayed_count),
-                                     end='', flush=True)
-                else:
-                    self.context.log("[{:3d}] ".format(number), end="", flush=True)
+                # if displayed_count is not None:
+                #     self.context.log("[{0:d}/{1:d}]\r".format(number, displayed_count),
+                #                      end='', flush=True)
+                # else:
+                #     self.context.log("[{:3d}] ".format(number), end="", flush=True)
                 if post_filter is not None:
                     try:
                         if not post_filter(post):
@@ -1310,6 +1310,7 @@ class Instaloader:
         for profile in profiles:
             with error_handler(profile.username):  # type: ignore # (ignore type for Python 3.5 support)
                 profile_name = profile.username
+                profile_id = profile.userid
 
                 # Download profile picture
                 if profile_pic:
@@ -1323,8 +1324,8 @@ class Instaloader:
                     save_meta = download_metadata
                 if save_meta:
                     if filepath is None:
-                        json_filename = os.path.join(self.dirname_pattern.format(profile=profile_name,
-                                                                                target=profile_name),
+                        json_filename = os.path.join(self.dirname_pattern.format(profile=profile_id,
+                                                                                target=profile_id),
                                                     '{0}-{1}'.format(profile_name, profile.userid))
                     else:
                         json_filename = os.path.join(filepath, '{0}-{1}'.format(profile_name, profile.userid))
@@ -1362,8 +1363,8 @@ class Instaloader:
                     save_pics = download_pics
                 # Iterate over pictures and download them
                 if posts:
-                    self.context.log("Retrieving posts from profile {}.".format(profile_name))
-                    self.posts_download_loop(profile.get_posts(), profile_name, fast_update, post_filter,
+                    # self.context.log("Retrieving posts from profile {}.".format(profile_name))
+                    self.posts_download_loop(profile.get_posts(), profile_id, fast_update, post_filter,
                                              total_count=profile.mediacount, owner_profile=profile, filepath = filepath,
                                              download_pics = save_pics, max_count = max_count)
 

@@ -49,7 +49,7 @@ def _main(instaloader: Instaloader, targetlist: List[Dict], df, filepath,
 def main(profiles, filename, **kwargs):
 
     loader = Instaloader(sleep=True, quiet=False, user_agent='{}'.format(default_user_agent()),
-                            dirname_pattern='data/{target}', filename_pattern='{target}_{date_utc}',
+                            dirname_pattern='devices/{target}', filename_pattern='{target}_{date_utc}',
                             download_pictures = kwargs.get('download_pictures', False),
                             download_videos = kwargs.get('download_videos', False),
                             download_video_thumbnails = kwargs.get('download_video_thumbnails', False),

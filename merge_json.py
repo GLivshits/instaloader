@@ -16,12 +16,16 @@ def itemgetter(*items, default = None):
     return g
 
 def merge_json(path):
+    if os.path.exists(os.path.join(path, 'all_posts.json.xz')):
+        return
     data_json = []
+    i = 0
     data_path = os.path.join(path, 'posts')
     target_keys = ['__typename', 'id', 'shortcode', 'edge_sidecar_to_children', 'dimensions', 'display_url', 'is_video', 'accessibility_caption',
                    'taken_at_timestamp', 'thumbnail_resources']
     if os.path.exists(data_path):
         for item in os.listdir(data_path):
+            i += 1
             json_path = os.path.join(data_path, item)
             open_func = open
             if item.endswith('.xz'):
@@ -30,6 +34,8 @@ def merge_json(path):
                 file = json.load(f)
             to_append = dict(zip(target_keys, itemgetter(*target_keys)(file['node'])))
             data_json.append(to_append)
+            if i > 30:
+                break
     with lzma.open(os.path.join(path, 'all_posts.json.xz'), 'wt') as f:
         json.dump(data_json, f)
 
@@ -47,5 +53,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
