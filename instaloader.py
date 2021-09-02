@@ -11,10 +11,13 @@ from instaloader.instaloader import Instaloader
 from instaloader.instaloadercontext import default_user_agent
 import pandas as pd
 from tqdm import tqdm
+import os
 
 def delete_row(df, row_idx):
     df = df.drop(row_idx)
     return df
+
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('profiles', nargs='*',
@@ -30,6 +33,14 @@ parser.add_argument('--api_key', type = str, default = '',
                     help = 'Whether to use proxy or not. For followers scraping its not used.')
 parser.add_argument('--proxy_index', type = int, default = 0,
                     help = 'Index of proxy (if used).')
+parser.add_argument('--download_profile_pic', action = 'store_true', help = 'Bool flag to download profile title pic')
+parser.add_argument('--download_pictures', action = 'store_true',
+                    help = 'Bool flag to download pictures from posts. It is highly recommended not to use this function'
+                           'due to slow download rate and high chance to get banned. Download metadata (jsons) instead.')
+parser.add_argument('--download_metadata', action = 'store_true',
+                    help = 'Bool flag to download posts metadata (jsons). They are saved in compressed LZMA format. '
+                           'A download_images.py script is used to download all pics from scraped metadata! Use it in '
+                           'combination with this flag for scraping huge number of profile media.')
 args = parser.parse_args()
 
 if len(args.profiles) > 0:
@@ -45,20 +56,17 @@ if args.use_proxy:
 api_key = args.api_key
 proxy_objects = []
 if args.use_proxy:
-    if len(api_key) > 0:
-        for i in range(args.proxy_index + 1):
-            proxy_objects.append(ProxyRotator(api_key = api_key, idx = i))
-    else:
-        proxy_objects = [None]
+    for i in range(args.proxy_index + 1):
+        proxy_objects.append(ProxyRotator(api_key = api_key, idx = i))
 else:
-    args.proxy_index = 0
+    proxy_objects.append(None)
 
 loaders = []
 for proxy in proxy_objects:
     loader = Instaloader(sleep=True, quiet=False, user_agent='{}'.format(default_user_agent()),
-                            dirname_pattern='data/{target}', filename_pattern='{target}_{date_utc}',
+                            dirname_pattern = os.path.join('data', '{target}'), filename_pattern='{target}_{date_utc}',
                             download_pictures = False,
-                            download_videos = False,
+                            download_videos = True,
                             download_video_thumbnails = False,
                             download_geotags = False,
                             download_comments=False,
@@ -77,43 +85,67 @@ func_dict = {'scrape_user_data': scrape_user_data, 'scrape_posts': scrape_posts,
              'scrape_followers': scrape_followers, 'scrape_hashtag': scrape_hashtag,
              'scrape_location': scrape_location}
 func = func_dict[args.task]
-
-df = pd.read_csv(args.csv_path, engine='python', sep=';')
-if 'downloaded' not in df.columns:
-    df['downloaded'] = False
-df['id'] = df['id'].astype(str)
-df['username'] = df['username'].astype(str)
-ids = df[['id', 'username']][~df['downloaded']]
-ids['id'] = ids['id'].astype(str)
-ids['username'] = ids['username'].astype(str)
-ids['idx'] = ids.index
-ids = ids.to_dict('records')
-
+if args.csv_path:
+    df = pd.read_csv(args.csv_path, engine='python', sep=';')
+    if 'downloaded' not in df.columns: # append download status identifier to skip already downloaded profiles after break
+        df['downloaded'] = False
+    df['id'] = df['id'].astype(str)
+    df['id'] = df['id'].fillna('nan')
+    df['username'] = df['username'].astype(str)
+    df['username'] = df['username'].fillna('nan')
+    ids = df[['id', 'username']][~df['downloaded']]
+    ids['id'] = ids['id'].astype(str)
+    ids['username'] = ids['username'].astype(str)
+    ids['idx'] = ids.index
+    ids = ids.to_dict('records')
+else:
+    ids = []
+    df = None
+    for item in args.profiles:
+        if item.isdigit():
+            ids.append({'id': int(item), 'username': 'nan'})
+        else:
+            ids.append({'id': 'nan', 'username': item})
 
 flag = True
-executor = concurrent.futures.ProcessPoolExecutor(max_workers=args.proxy_index + 1)
-def subprocess(target, total_index):
-    global df
+total_index = 0
+def subprocess(loader, target):
+    global total_index, df
     total_index += 1
     print('Current total index is {}.'.format(total_index))
     try:
-        func._main(instaloader = loaders[total_index % (args.proxy_index + 1)], target = target)
-        df.loc[target['idx'], 'downloaded'] = True
+        func._main(instaloader = loader, target = target)
         total_index += 1
-        if (total_index % 100 == 0):
-            df.to_csv(args.csv_path, sep = ';', index = None)
+        if not (df is None):
+            df.loc[target['idx'], 'downloaded'] = True
+            if (total_index % 100 == 0):
+                df.to_csv(args.csv_path, sep = ';', index = None)
     except (QueryReturnedNotFoundException, ProfileNotExistsException):
-        df = delete_row(df, target['idx'])
+        if not (df is None):
+            df = delete_row(df, target['idx'])
         pass
     except KeyboardInterrupt:
-        df.to_csv(args.csv_path, sep=';', index=None)
+        if not (df is None):
+            df.to_csv(args.csv_path, sep = ';', index = None)
         raise
     except Exception as err:
         print(err)
 
-jobs = [executor.submit(subprocess, target, index) for index, target  in enumerate(ids)]
-for _ in tqdm(concurrent.futures.as_completed(jobs), total = len(jobs)):
-    pass
+num_processes = 1 if (not args.use_proxy) else (args.proxy_index + 1)
+if num_processes == 1:
+    loader = loaders[0]
+    del loaders
+    for item in ids:
+        subprocess(loader, item)
+else:
+
+
+# executor = concurrent.futures.ProcessPoolExecutor(max_workers=args.proxy_index + 1)
+#
+#
+# jobs = [executor.submit(subprocess, target, index) for index, target  in enumerate(ids)]
+# for _ in tqdm(concurrent.futures.as_completed(jobs), total = len(jobs)):
+#     pass
 
 # if __name__ == '__main__':
 #     k = 1

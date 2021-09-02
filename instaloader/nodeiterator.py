@@ -139,7 +139,6 @@ class NodeIterator(Iterator[T]):
                 self._page_index, self._data = page_index, data
                 raise
             return self.__next__()
-        print('Raising StopIteration...')
         raise StopIteration()
 
     @property

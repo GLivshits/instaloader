@@ -54,3 +54,6 @@ Traceback (most recent call last):
     html = html.split('<table class="w3-table-all notranslate">')[1]
 IndexError: list index out of range
 2021-07-02 12:15:30,399 - justa.wie: --login=USERNAME required.
+2021-08-27 14:23:17,347 - JSON Query to graphql/query: Redirected to login page. Use --login. [retrying; skip with ^C]
+2021-08-27 14:23:45,522 - [skipped by user]
+2021-08-27 14:23:45,523 - im_vladapetrova: JSON Query to graphql/query: Redirected to login page. Use --login.

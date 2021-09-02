@@ -168,7 +168,3 @@ def main(profiles, filename, **kwargs):
         print('Nothing to scrape here!')
         loader.close()
         raise KeyboardInterrupt
-
-
-if __name__ == "__main__":
-    main()
