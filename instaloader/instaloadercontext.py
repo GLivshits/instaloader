@@ -66,7 +66,7 @@ class InstaloaderContext:
     def __init__(self, sleep: bool = True, quiet: bool = False, user_agent: Optional[str] = None,
                  max_connection_attempts: int = 3, request_timeout: Optional[float] = None,
                  rate_controller: Optional[Callable[["InstaloaderContext"], "RateController"]] = None,
-                 rapidapi_key: Optional[str] = None, proxyrotator: Optional[ProxyRotator] = None):
+                 proxyrotator: Optional[ProxyRotator] = None):
 
         logging.basicConfig(filename='app.log', filemode='a', format='%(asctime)s - %(message)s')
         self.proxyrotator = proxyrotator
@@ -96,7 +96,6 @@ class InstaloaderContext:
         self._graphql_page_length = 50
         self._root_rhx_gis = None
         self.two_factor_auth_pending = None
-        self.rapidapi_key = rapidapi_key
         self.loginexceptioncount = 0
 
 

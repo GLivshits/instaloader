@@ -127,7 +127,6 @@ class NodeIterator(Iterator[T]):
             except KeyboardInterrupt:
                 self._page_index, self._total_index = page_index, total_index
                 raise
-            # print('First if in __next__.')
             return self._node_wrapper(node)
         if self._data['page_info']['has_next_page']:
             query_response = self._query(self._data['page_info']['end_cursor'])

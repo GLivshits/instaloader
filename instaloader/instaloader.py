@@ -185,7 +185,8 @@ class Instaloader:
                  user_agent: Optional[str] = None,
                  dirname_pattern: Optional[str] = None,
                  filename_pattern: Optional[str] = None,
-                 download_pictures=True,
+                 download_pictures: bool = True,
+                 download_profile_pic: bool = False,
                  download_videos: bool = True,
                  download_video_thumbnails: bool = True,
                  download_geotags: bool = True,
@@ -199,18 +200,18 @@ class Instaloader:
                  rate_controller: Optional[Callable[[InstaloaderContext], RateController]] = None,
                  resume_prefix: Optional[str] = "iterator",
                  check_resume_bbd: bool = True,
-                 rapidapi_key: Optional[str] = None,
                  proxyrotator: Optional = None):
 
         self.proxyrotator = proxyrotator
 
         self.context = InstaloaderContext(sleep, quiet, user_agent, max_connection_attempts,
-                                          request_timeout, rate_controller, rapidapi_key, self.proxyrotator)
+                                          request_timeout, rate_controller, self.proxyrotator)
 
         # configuration parameters
         self.dirname_pattern = dirname_pattern or "{target}"
         self.filename_pattern = filename_pattern or "{date_utc}_UTC"
         self.download_pictures = download_pictures
+        self.download_profile_pic = download_profile_pic
         self.download_videos = download_videos
         self.download_video_thumbnails = download_video_thumbnails
         self.download_geotags = download_geotags
@@ -535,8 +536,7 @@ class Instaloader:
         .. versionadded:: 4.1"""
         return _PostPathFormatter(item).format(self.filename_pattern, target=target)
 
-    def download_post(self, post: Post, target: Union[str, Path], filepath: Optional[str] = None,
-                      download_pics: Optional[bool] = None) -> bool:
+    def download_post(self, post: Post, target: Union[str, Path], filepath: Optional[str] = None) -> bool:
         #print('FUNCTION EXECUTED:{}'.format(inspect.currentframe().f_code.co_name))
         """
         Download everything associated with one instagram post node, i.e. picture, caption and video.
@@ -554,8 +554,7 @@ class Instaloader:
         os.makedirs(dirname, exist_ok = True)
         filename = os.path.join(dirname, self.format_filename(post, target=target))
 
-        if download_pics is None:
-            download_pics = self.download_pictures
+        download_pics = self.download_pictures
 
         # Download the image(s) / video thumbnail and videos within sidecars if desired
         downloaded = True
@@ -572,7 +571,7 @@ class Instaloader:
                                                         mtime=post.date_local, filename_suffix=str(edge_number))
         elif post.typename == 'GraphImage':
             # Download picture
-            if self.download_pictures and download_flag:
+            if self.download_pictures:
                 downloaded = self.download_pic(filename=filename, url=post.url, mtime=post.date_local)
         elif post.typename == 'GraphVideo':
             # Download video thumbnail (--no-pictures implies --no-video-thumbnails)
@@ -778,8 +777,7 @@ class Instaloader:
                             max_count: Optional[int] = None,
                             total_count: Optional[int] = None,
                             owner_profile: Optional[Profile] = None,
-                            filepath: Optional[str] = None,
-                            download_pics: Optional[bool] = None) -> None:
+                            filepath: Optional[str] = None) -> None:
         #print('FUNCTION EXECUTED:{}'.format(inspect.currentframe().f_code.co_name))
         """
         Download the Posts returned by given Post Iterator.
@@ -849,8 +847,7 @@ class Instaloader:
                         post_changed = False
                         while True:
                             try:
-                                downloaded = self.download_post(post, target=target, filepath = filepath,
-                                                                download_pics = download_pics)
+                                downloaded = self.download_post(post, target=target, filepath = filepath)
                                 num_good += 1
                                 break
                             except PostChangedException:
@@ -1013,7 +1010,6 @@ class Instaloader:
                          max_count: Optional[int] = None,
                          post_filter: Optional[Callable[[Post], bool]] = None,
                          fast_update: bool = False,
-                         profile_pic: bool = True,
                          posts: bool = True) -> None:
         #print('FUNCTION EXECUTED:{}'.format(inspect.currentframe().f_code.co_name))
         """Download pictures of one hashtag.
@@ -1027,7 +1023,6 @@ class Instaloader:
         :param max_count: Maximum count of pictures to download
         :param post_filter: function(post), which returns True if given picture should be downloaded
         :param fast_update: If true, abort when first already-downloaded picture is encountered
-        :param profile_pic: not :option:`--no-profile-pic`.
         :param posts: not :option:`--no-posts`.
 
         .. versionchanged:: 4.4
@@ -1040,7 +1035,7 @@ class Instaloader:
         if not isinstance(hashtag, Hashtag):
             return
         target = "#" + hashtag.name
-        if profile_pic:
+        if self.download_profile_pic:
             with self.context.error_catcher("Download profile picture of {}".format(target)):
                 self.download_hashtag_profilepic(hashtag)
         if posts:
@@ -1264,7 +1259,7 @@ class Instaloader:
         raise ProfileNotExistsException("Profile {0} does not exist.".format(profile_name))
 
     def download_profiles(self, profiles: Set[Profile],
-                          profile_pic: bool = True, posts: bool = True,
+                          posts: bool = True,
                           tagged: bool = False,
                           igtv: bool = False,
                           highlights: bool = False,
@@ -1274,14 +1269,12 @@ class Instaloader:
                           storyitem_filter: Optional[Callable[[Post], bool]] = None,
                           raise_errors: bool = False,
                           filepath: Optional[str] = None,
-                          download_pics: Optional[bool] = None,
-                          download_metadata: Optional[bool] = None,
+                          save_profile_metadata: Optional[bool] = False,
                           max_count: Optional[int] = None):
         #print('FUNCTION EXECUTED:{}'.format(inspect.currentframe().f_code.co_name))
         """High-level method to download set of profiles.
 
         :param profiles: Set of profiles to download.
-        :param profile_pic: not :option:`--no-profile-pic`.
         :param posts: not :option:`--no-posts`.
         :param tagged: :option:`--tagged`.
         :param igtv: :option:`--igtv`.
@@ -1313,16 +1306,11 @@ class Instaloader:
                 profile_id = profile.userid
 
                 # Download profile picture
-                if profile_pic:
+                if self.download_profile_pic:
                     with self.context.error_catcher('Download profile picture of {}'.format(profile_name)):
                         self.download_profilepic(profile)
 
-                # Save metadata as JSON if desired.
-                if download_metadata is None:
-                    save_meta = self.save_metadata
-                else:
-                    save_meta = download_metadata
-                if save_meta:
+                if save_profile_metadata:
                     if filepath is None:
                         json_filename = os.path.join(self.dirname_pattern.format(profile=profile_id,
                                                                                 target=profile_id),
@@ -1357,16 +1345,12 @@ class Instaloader:
                     with self.context.error_catcher('Download highlights of {}'.format(profile_name)):
                         self.download_highlights(profile, fast_update=fast_update, storyitem_filter=storyitem_filter)
 
-                if download_pics is None:
-                    save_pics = self.download_pictures
-                else:
-                    save_pics = download_pics
                 # Iterate over pictures and download them
                 if posts:
                     # self.context.log("Retrieving posts from profile {}.".format(profile_name))
                     self.posts_download_loop(profile.get_posts(), profile_id, fast_update, post_filter,
                                              total_count=profile.mediacount, owner_profile=profile, filepath = filepath,
-                                             download_pics = save_pics, max_count = max_count)
+                                             max_count = max_count)
 
         if stories and profiles:
             with self.context.error_catcher("Download stories"):

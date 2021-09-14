@@ -3,6 +3,7 @@
 import argparse
 import concurrent.futures
 import time
+from functools import partial, partialmethod
 
 from instaloader import scrape_followers, scrape_user_data, scrape_posts, scrape_hashtag, scrape_location
 from instaloader.proxyrotator import ProxyRotator
@@ -11,7 +12,9 @@ from instaloader.instaloader import Instaloader
 from instaloader.instaloadercontext import default_user_agent
 import pandas as pd
 from tqdm import tqdm
+from multiprocessing import Process
 import os
+from instaloader.utils import get_profile_struct
 
 def delete_row(df, row_idx):
     df = df.drop(row_idx)
@@ -37,10 +40,20 @@ parser.add_argument('--download_profile_pic', action = 'store_true', help = 'Boo
 parser.add_argument('--download_pictures', action = 'store_true',
                     help = 'Bool flag to download pictures from posts. It is highly recommended not to use this function'
                            'due to slow download rate and high chance to get banned. Download metadata (jsons) instead.')
+parser.add_argument('--download_videos', action = 'store_true',
+                    help = 'Bool flag to download videos from posts. On the state of affairs on 3 Sept, 2021 metadata'
+                           'contains only link to thumbnail, but not video.')
+parser.add_argument('--download_video_thumbnails', action = 'store_true',
+                    help = 'Bool flag to download video thumbnails from posts. It is highly recommended '
+                           'not to use this function due to slow download rate and high chance to get banned. '
+                           'Download metadata (jsons) instead.')
 parser.add_argument('--download_metadata', action = 'store_true',
                     help = 'Bool flag to download posts metadata (jsons). They are saved in compressed LZMA format. '
                            'A download_images.py script is used to download all pics from scraped metadata! Use it in '
                            'combination with this flag for scraping huge number of profile media.')
+parser.add_argument('--username', type = str, help = 'Instagram username for login')
+parser.add_argument('--password', type = str, help = 'Instagram password for login')
+
 args = parser.parse_args()
 
 if len(args.profiles) > 0:
@@ -65,26 +78,28 @@ loaders = []
 for proxy in proxy_objects:
     loader = Instaloader(sleep=True, quiet=False, user_agent='{}'.format(default_user_agent()),
                             dirname_pattern = os.path.join('data', '{target}'), filename_pattern='{target}_{date_utc}',
-                            download_pictures = False,
-                            download_videos = True,
-                            download_video_thumbnails = False,
+                            download_pictures = args.download_pictures,
+                            download_profile_pic = args.download_profile_pic,
+                            download_videos = args.download_videos,
+                            download_video_thumbnails = args.download_video_thumbnails,
                             download_geotags = False,
-                            download_comments=False,
-                            save_metadata = True,
+                            download_comments = False,
+                            save_metadata = args.download_metadata,
                             compress_json = True,
-                            post_metadata_txt_pattern='',
-                            storyitem_metadata_txt_pattern=None,
-                            max_connection_attempts=2,
-                            request_timeout=15.0,
-                            resume_prefix='iterator',
-                            check_resume_bbd=False,
-                            rapidapi_key=None, proxyrotator = proxy)
+                            post_metadata_txt_pattern = '',
+                            storyitem_metadata_txt_pattern = None,
+                            max_connection_attempts = 2,
+                            request_timeout = 15.0,
+                            resume_prefix = 'iterator',
+                            check_resume_bbd = False,
+                            proxyrotator = proxy)
     loaders.append(loader)
 
 func_dict = {'scrape_user_data': scrape_user_data, 'scrape_posts': scrape_posts,
              'scrape_followers': scrape_followers, 'scrape_hashtag': scrape_hashtag,
              'scrape_location': scrape_location}
-func = func_dict[args.task]
+func = func_dict[args.task]._main
+# func = partial(func, username = args.username, password = args.password)
 if args.csv_path:
     df = pd.read_csv(args.csv_path, engine='python', sep=';')
     if 'downloaded' not in df.columns: # append download status identifier to skip already downloaded profiles after break
@@ -107,6 +122,8 @@ else:
         else:
             ids.append({'id': 'nan', 'username': item})
 
+ids_container = iter(ids)
+
 flag = True
 total_index = 0
 def subprocess(loader, target):
@@ -114,7 +131,10 @@ def subprocess(loader, target):
     total_index += 1
     print('Current total index is {}.'.format(total_index))
     try:
-        func._main(instaloader = loader, target = target)
+        if args.task not in ['scrape_hashtag', 'scrape_location']:
+            target = get_profile_struct(loader, target)
+
+        func(loader, target)
         total_index += 1
         if not (df is None):
             df.loc[target['idx'], 'downloaded'] = True
@@ -130,14 +150,23 @@ def subprocess(loader, target):
         raise
     except Exception as err:
         print(err)
+        raise err
+
+
+
 
 num_processes = 1 if (not args.use_proxy) else (args.proxy_index + 1)
 if num_processes == 1:
     loader = loaders[0]
     del loaders
-    for item in ids:
+    for item in ids_container:
         subprocess(loader, item)
 else:
+    processes = []
+    for item in loaders:
+        processes.append(Process(subprocess, args = (item, next(ids_container))))
+
+print('Ready!')
 
 
 # executor = concurrent.futures.ProcessPoolExecutor(max_workers=args.proxy_index + 1)
