@@ -1310,6 +1310,8 @@ class Hashtag:
         #print('FUNCTION EXECUTED:{}'.format(inspect.currentframe().f_code.co_name))
         return self._context.get_json("explore/tags/{0}/".format(self.name),
                                       params)["graphql"]["hashtag"]
+        # data = self._context.graphql_query("ded47faa9a1aaded10161a2ff32abb6b", params)['data']['reels_media'][0]['items']
+
 
     def _obtain_metadata(self):
         #print('FUNCTION EXECUTED:{}'.format(inspect.currentframe().f_code.co_name))

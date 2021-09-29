@@ -3,7 +3,7 @@ import re
 from operator import itemgetter
 from typing import Dict
 from .instaloader import Instaloader
-from .exceptions import QueryReturnedNotFoundException, ProfileNotExistsException
+from .exceptions import QueryReturnedNotFoundException, ProfileNotExistsException, TwoFactorAuthRequiredException, BadCredentialsException
 from .structures import Profile
 
 
@@ -35,13 +35,13 @@ def login(loader: Instaloader, username: str, password: str):
         if not re.match(r"^[A-Za-z0-9._]+$", username):
             loader.context.error(
                 "Warning: Parameter \"{}\" for --login is not a valid username.".format(username))
-        try:
-            loader.load_session_from_file(username, sessionfile)
-        except FileNotFoundError as err:
-            if sessionfile is not None:
-                print(err, file=sys.stderr)
-            loader.context.log("Session file does not exist yet - Logging in.")
-        if not loader.context.is_logged_in or username != instaloader.test_login():
+        # try:
+        #     loader.load_session_from_file(username, sessionfile)
+        # except FileNotFoundError as err:
+        #     if sessionfile is not None:
+        #         print(err, file=sys.stderr)
+        #     loader.context.log("Session file does not exist yet - Logging in.")
+        if not loader.context.is_logged_in or username != loader.test_login():
             if password is not None:
                 try:
                     loader.login(username, password)

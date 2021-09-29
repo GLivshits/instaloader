@@ -11,8 +11,8 @@ from instaloader.exceptions import InstaloaderException, QueryReturnedNotFoundEx
 from instaloader.instaloader import Instaloader
 from instaloader.instaloadercontext import default_user_agent
 import pandas as pd
-from tqdm import tqdm
-from multiprocessing import Process
+from queue import Empty, Queue
+from threading import Thread
 import os
 from instaloader.utils import get_profile_struct
 
@@ -72,7 +72,7 @@ if args.use_proxy:
     for i in range(args.proxy_index + 1):
         proxy_objects.append(ProxyRotator(api_key = api_key, idx = i))
 else:
-    proxy_objects.append(None)
+    proxy_objects = [None]
 
 loaders = []
 for proxy in proxy_objects:
@@ -122,10 +122,26 @@ else:
         else:
             ids.append({'id': 'nan', 'username': item})
 
+print(len(ids))
 ids_container = iter(ids)
 
 flag = True
 total_index = 0
+done = False
+
+def produce(queue):
+    global ids_container
+    while True:
+        try:
+            item = next(ids_container)
+            print('Producer thread target: {}'.format(item))
+            queue.put(item)
+        except StopIteration:
+            break
+        except KeyboardInterrupt:
+            break
+
+
 def subprocess(loader, target):
     global total_index, df
     total_index += 1
@@ -133,8 +149,7 @@ def subprocess(loader, target):
     try:
         if args.task not in ['scrape_hashtag', 'scrape_location']:
             target = get_profile_struct(loader, target)
-
-        func(loader, target)
+        func(loader, target, max_count = 3)
         total_index += 1
         if not (df is None):
             df.loc[target['idx'], 'downloaded'] = True
@@ -153,18 +168,80 @@ def subprocess(loader, target):
         raise err
 
 
+def subprocess(loader, queue):
+    global total_index, df, done
+    total_index += 1
+    print('Current total index is {}.'.format(total_index))
+    while not done:
+        try:
+            target = queue.get(timeout = 1.)
+            print('Consumer thread target: {}'.format(target))
+            if args.task not in ['scrape_hashtag', 'scrape_location']:
+                target = get_profile_struct(loader, target)
+            func(loader, target, max_count = 3)
+            total_index += 1
+            if not (df is None):
+                df.loc[target['idx'], 'downloaded'] = True
+                if (total_index % 100 == 0):
+                    df.to_csv(args.csv_path, sep = ';', index = None)
+            queue.task_done()
+        except (QueryReturnedNotFoundException, ProfileNotExistsException):
+            if not (df is None):
+                df = delete_row(df, target['idx'])
+            pass
+        except KeyboardInterrupt:
+            if not (df is None):
+                df.to_csv(args.csv_path, sep = ';', index = None)
+            raise
+        except Empty:
+            done = True
+            pass
+        except Exception as err:
+            print(err)
+            raise err
+
+# num_processes = 1 if (not args.use_proxy) else (args.proxy_index + 1)
+num_processes = len(loaders)
+
+q = Queue(len(loaders))
+producer = Thread(target = produce, args = (q,))
+producer.start()
+
+# if num_processes == 1:
+#     loader = loaders[0]
+#     del loaders
+#     for item in ids_container:
+#         subprocess(loader, item)
+# else:
+    # processes = [None]*len(loaders)
+processes = []
+flag = True
+for i in range(len(loaders)):
+    consumer = Thread(target = subprocess, args = (loaders[i], q))
+    consumer.start()
+    processes.append(consumer)
+producer.join()
+for consumer in processes:
+    consumer.join()
+        # processes[i].join()
+    # while flag:
+    #     try:
+    #         for i, process in enumerate(processes):
+    #             time.sleep(0.1)
+    #             if process.is_alive():
+    #                 continue
+    #             else:
+    #                 process.kill()
+    #                 processes[i] = Thread(subprocess, args = (item, next(ids_container)))
+    #                 processes[i].start()
+    #                 # processes[i].join()
 
 
-num_processes = 1 if (not args.use_proxy) else (args.proxy_index + 1)
-if num_processes == 1:
-    loader = loaders[0]
-    del loaders
-    for item in ids_container:
-        subprocess(loader, item)
-else:
-    processes = []
-    for item in loaders:
-        processes.append(Process(subprocess, args = (item, next(ids_container))))
+
+        # except KeyboardInterrupt:
+        #     print('KeyboardInterrupt! breaking the loop')
+        #     flag = False
+
 
 print('Ready!')
 

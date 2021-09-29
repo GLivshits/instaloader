@@ -39,13 +39,9 @@ def copy_session(session: requests.Session, request_timeout: Optional[float] = N
     return new
 
 
-# def default_user_agent() -> str:
-#     return 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 ' \
-#            '(KHTML, like Gecko) Chrome/51.0.2704.79 Safari/537.36'
-
 def default_user_agent() -> str:
-    #print('FUNCTION EXECUTED:{}'.format(inspect.currentframe().f_code.co_name))
-    return 'Mozilla/5.0 (Linux; Android 8.1.0; motorola one Build/OPKS28.63-18-3; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/70.0.3538.80 Mobile Safari/537.36 Instagram 72.0.0.21.98 Android (27/8.1.0; 320dpi; 720x1362; motorola; motorola one; deen_sprout; qcom; pt_BR; 132081645)'
+    return 'Mozilla/5.0 (X11; Linux i686; rv:92.0) Gecko/20100101 Firefox/92.0'
+
 
 
 class InstaloaderContext:
@@ -85,8 +81,7 @@ class InstaloaderContext:
             self.proxy_dict = self.proxyrotator.get_proxy_url_format()
         self.total_requests = 0
         self.request_batch = np.random.randint(10, 25)*6
-        print('Current request batch limit: {}'.format(self.request_batch))
-        # self.user_agent = user_agent if user_agent is not None else default_user_agent()
+        self.user_agent = user_agent if user_agent is not None else default_user_agent()
         self.request_timeout = request_timeout
         self._session = self.get_anonymous_session()
         self.username = None
@@ -418,8 +413,6 @@ class InstaloaderContext:
                 self.do_sleep()
                 print('Current request batch limit: {}'.format(self.request_batch))
             resp = sess.get('https://{0}/{1}'.format(host, path), params=params, allow_redirects=False)
-            self.request_batch -= 1
-
 
             while resp.is_redirect:
                 redirect_url = resp.headers['location']

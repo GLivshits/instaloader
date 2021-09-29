@@ -8,13 +8,17 @@ from .exceptions import LoginRequiredException
 import time
 import pandas as pd
 from operator import itemgetter
+from .utils import login
 
 def _main(instaloader: Instaloader,
           loc: Dict,
+          username: Optional[str] = None,
+          password: Optional[str] = None,
           max_count: Optional[int] = 1000000) -> None:
 
     flag = True
     loc = str(loc['id'])
+    login(instaloader, username, password)
     while flag:
         try:
             instaloader.context.log("Scraping location: {}".format(loc))
