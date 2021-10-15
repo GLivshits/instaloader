@@ -141,31 +141,31 @@ def produce(queue):
         except KeyboardInterrupt:
             break
 
-
-def subprocess(loader, target):
-    global total_index, df
-    total_index += 1
-    print('Current total index is {}.'.format(total_index))
-    try:
-        if args.task not in ['scrape_hashtag', 'scrape_location']:
-            target = get_profile_struct(loader, target)
-        func(loader, target, max_count = 3)
-        total_index += 1
-        if not (df is None):
-            df.loc[target['idx'], 'downloaded'] = True
-            if (total_index % 100 == 0):
-                df.to_csv(args.csv_path, sep = ';', index = None)
-    except (QueryReturnedNotFoundException, ProfileNotExistsException):
-        if not (df is None):
-            df = delete_row(df, target['idx'])
-        pass
-    except KeyboardInterrupt:
-        if not (df is None):
-            df.to_csv(args.csv_path, sep = ';', index = None)
-        raise
-    except Exception as err:
-        print(err)
-        raise err
+#
+# def subprocess(loader, target):
+#     global total_index, df
+#     total_index += 1
+#     print('Current total index is {}.'.format(total_index))
+#     try:
+#         if args.task not in ['scrape_hashtag', 'scrape_location']:
+#             target = get_profile_struct(loader, target)
+#         func(loader, target, max_count = 3)
+#         total_index += 1
+#         if not (df is None):
+#             df.loc[target['idx'], 'downloaded'] = True
+#             if (total_index % 100 == 0):
+#                 df.to_csv(args.csv_path, sep = ';', index = None)
+#     except (QueryReturnedNotFoundException, ProfileNotExistsException):
+#         if not (df is None):
+#             df = delete_row(df, target['idx'])
+#         pass
+#     except KeyboardInterrupt:
+#         if not (df is None):
+#             df.to_csv(args.csv_path, sep = ';', index = None)
+#         raise
+#     except Exception as err:
+#         print(err)
+#         raise err
 
 
 def subprocess(loader, queue):
